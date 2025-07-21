@@ -425,8 +425,6 @@ class _SchoolsPageState extends State<SchoolsPage> {
     _nameEnController.text = school['nameEn'] ?? '';
     _addressController.text = school['address'] ?? '';
     _phoneController.text = school['phone'] ?? '';
-    final schoolTypesString = school['schoolTypes'] as String? ?? '';
-    selectedTypes = schoolTypesString.isNotEmpty ? schoolTypesString.split(',') : [];
     selectedLogoPath = school['logoPath'];
 
     await showDialog(
@@ -451,8 +449,8 @@ class _SchoolsPageState extends State<SchoolsPage> {
                     padding: const EdgeInsets.all(8.0),
                     child: Image.file(
                       File(selectedLogoPath!),
-                      height: 50, // تغيير من 100 إلى 50
-                      width: 50, // تغيير من 100 إلى 50
+                      height: 50,
+                      width: 50,
                       fit: BoxFit.cover,
                     ),
                   ),
@@ -487,47 +485,6 @@ class _SchoolsPageState extends State<SchoolsPage> {
                     border: OutlineInputBorder(),
                   ),
                 ),
-                SizedBox(height: 16),
-                Text("نوع المدرسة:"),
-                CheckboxListTile(
-                  title: Text("ابتدائية"),
-                  value: selectedTypes.contains("ابتدائي"),
-                  onChanged: (bool? value) {
-                    setDialogState(() {
-                      if (value!) {
-                        selectedTypes.add("ابتدائي");
-                      } else {
-                        selectedTypes.remove("ابتدائي");
-                      }
-                    });
-                  },
-                ),
-                CheckboxListTile(
-                  title: Text("متوسطة"),
-                  value: selectedTypes.contains("متوسط"),
-                  onChanged: (bool? value) {
-                    setDialogState(() {
-                      if (value!) {
-                        selectedTypes.add("متوسط");
-                      } else {
-                        selectedTypes.remove("متوسط");
-                      }
-                    });
-                  },
-                ),
-                CheckboxListTile(
-                  title: Text("اعدادية"),
-                  value: selectedTypes.contains("إعدادي"),
-                  onChanged: (bool? value) {
-                    setDialogState(() {
-                      if (value!) {
-                        selectedTypes.add("إعدادي");
-                      } else {
-                        selectedTypes.remove("إعدادي");
-                      }
-                    });
-                  },
-                ),
               ],
             ),
           ),
@@ -541,13 +498,11 @@ class _SchoolsPageState extends State<SchoolsPage> {
             ),
             TextButton(
               onPressed: () async {
-                if (_nameArController.text.isNotEmpty && selectedTypes.isNotEmpty) {
-                  String types = selectedTypes.join(',');
+                if (_nameArController.text.isNotEmpty) {
                   await sqlDb.updateData('''
                     UPDATE schools 
                     SET name = '${_nameArController.text}',
                         nameEn = '${_nameEnController.text}',
-                        schoolTypes = '$types',
                         address = '${_addressController.text}',
                         phone = '${_phoneController.text}',
                         logoPath = '${selectedLogoPath ?? ''}'
