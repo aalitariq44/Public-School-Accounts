@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show ByteData, Uint8List, rootBundle;
 import 'package:maryams_school_fees/academicYear.dart';
+import 'package:maryams_school_fees/data.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
@@ -54,15 +55,38 @@ class PrintPage extends StatefulWidget {
 class _PrintPageState extends State<PrintPage> {
   late String stream;
   String academicYear = AppSettings().academicYear;
-  String selectedAccountManager = 'محاسب';
-  List<String> accountManagers = [
-    "محاسب",
-  ];
+  String selectedAccountManager = '';
+  List<String> accountManagers = [];
+
+  // جلب المحاسبين من قاعدة البيانات
+  Future<void> _loadAccountManagers() async {
+    try {
+      final SqlDb sqlDb = SqlDb();
+      List<Map> result = await sqlDb.readData("SELECT name FROM accountants");
+      setState(() {
+        accountManagers = result.map<String>((e) => e['name'].toString()).toList();
+        // إضافة خيار إضافة محاسب
+        accountManagers.add('إضافة اسم محاسب');
+        // تعيين الافتراضي
+        if (accountManagers.isNotEmpty) {
+          selectedAccountManager = accountManagers.first;
+        } else {
+          selectedAccountManager = '';
+        }
+      });
+    } catch (e) {
+      setState(() {
+        accountManagers = ['محاسب', 'إضافة اسم محاسب'];
+        selectedAccountManager = 'محاسب';
+      });
+    }
+  }
 
   @override
   void initState() {
     super.initState();
     stream = (widget.stream == "null") ? "" : widget.stream;
+    _loadAccountManagers();
   }
 
   void _showAddAccountManagerDialog() {
@@ -87,11 +111,12 @@ class _PrintPageState extends State<PrintPage> {
             ),
             TextButton(
               child: Text('إضافة'),
-              onPressed: () {
+              onPressed: () async {
                 if (newManager.isNotEmpty) {
+                  final SqlDb sqlDb = SqlDb();
+                  await sqlDb.insertData("INSERT INTO accountants (name) VALUES ('$newManager')");
+                  await _loadAccountManagers();
                   setState(() {
-                    accountManagers.insert(
-                        accountManagers.length - 1, newManager);
                     selectedAccountManager = newManager;
                   });
                 }
@@ -111,7 +136,7 @@ class _PrintPageState extends State<PrintPage> {
         title: Text("معاينة الطباعة"),
         actions: [
           DropdownButton<String>(
-            value: selectedAccountManager,
+            value: selectedAccountManager.isNotEmpty ? selectedAccountManager : null,
             icon: Icon(Icons.arrow_drop_down),
             iconSize: 24,
             elevation: 16,
@@ -129,18 +154,12 @@ class _PrintPageState extends State<PrintPage> {
                 });
               }
             },
-            items: [
-              ...accountManagers.map<DropdownMenuItem<String>>((String value) {
-                return DropdownMenuItem<String>(
-                  value: value,
-                  child: Text(value),
-                );
-              }).toList(),
-              DropdownMenuItem<String>(
-                value: 'إضافة اسم محاسب',
-                child: Text('إضافة اسم محاسب'),
-              ),
-            ],
+            items: accountManagers.map<DropdownMenuItem<String>>((String value) {
+              return DropdownMenuItem<String>(
+                value: value,
+                child: Text(value),
+              );
+            }).toList(),
           ),
           SizedBox(width: 20), // لإضافة بعض المساحة على اليمين
         ],
