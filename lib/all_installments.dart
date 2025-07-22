@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:maryams_school_fees/data.dart';
+import 'package:maryams_school_fees/one_student.dart';
 
 class AllInstallments extends StatefulWidget {
   final int school;
@@ -114,91 +115,104 @@ class _AllInstallmentsState extends State<AllInstallments> {
                   separatorBuilder: (context, index) => SizedBox(height: 8),
                   itemBuilder: (context, index) {
                     var installment = filteredInstallments[index];
-                    return Container(
-                      margin: EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        color: Color.fromARGB(255, 25, 2, 79),
-                      ),
-                      child: ListTile(
-                        title: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Container(
-                                  padding: EdgeInsets.all(4),
-                                  margin: EdgeInsets.only(left: 10),
-                                  decoration:
-                                      BoxDecoration(color: Colors.amber),
-                                  child: Center(
-                                    child: Text(
-                                      '${index + 1}',
-                                      style: TextStyle(color: Colors.black),
+                    return GestureDetector(
+                      onTap: () {
+                        // الانتقال إلى صفحة تفاصيل الطالب عند الضغط على القسط
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => OneStudent(
+                              id: int.tryParse(installment['IDStudent'].toString()) ?? 0,
+                            ),
+                          ),
+                        );
+                      },
+                      child: Container(
+                        margin: EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: Color.fromARGB(255, 25, 2, 79),
+                        ),
+                        child: ListTile(
+                          title: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Container(
+                                    padding: EdgeInsets.all(4),
+                                    margin: EdgeInsets.only(left: 10),
+                                    decoration:
+                                        BoxDecoration(color: Colors.amber),
+                                    child: Center(
+                                      child: Text(
+                                        '${index + 1}',
+                                        style: TextStyle(color: Colors.black),
+                                      ),
                                     ),
                                   ),
-                                ),
-                                Text(
-                                  "اسم الطالب: ",
-                                  style: textStyle,
-                                ),
-                                Text(
-                                  "${installment['name']}",
-                                  style: textStyle,
-                                ),
-                                Spacer(),
-                                Text(
-                                  "رقم المدرسة: ${installment['school']}",
-                                  style: textStyle,
-                                ),
-                              ],
-                            ),
-                            SizedBox(height: 8),
-                            Row(
-                              children: [
-                                Text(
-                                  "الصف: ${installment['stage']}",
-                                  style: textStyle,
-                                ),
-                                SizedBox(width: 10),
-                                Text(
-                                  "${installment['stream'] == "null" ? '' : installment['stream']}",
-                                  style: textStyle,
-                                ),
-                                SizedBox(width: 10),
-                                Text(
-                                  "الشعبة: ${installment['section'] ?? 'غير محدد'}",
-                                  style: textStyle,
-                                ),
-                                Spacer(),
-                                Text(
-                                  "رقم القسط: ${installment['id']}",
-                                  style: textStyle,
-                                ),
-                              ],
-                            ),
-                            SizedBox(height: 8),
-                            Row(
-                              children: [
-                                Text(
-                                  "مبلغ القسط: ",
-                                  style: textStyle,
-                                ),
-                                Text(
-                                  "${installment['amount']}",
-                                  style: textStyle,
-                                ),
-                                Text(
-                                  "  الف دينار عراقي   ",
-                                  style: TextStyle(color: Colors.grey),
-                                ),
-                                Spacer(),
-                                Text(
-                                  "${installment['date']}",
-                                  style: headerTextStyle,
-                                ),
-                              ],
-                            ),
-                          ],
+                                  Text(
+                                    "اسم الطالب: ",
+                                    style: textStyle,
+                                  ),
+                                  Text(
+                                    "${installment['name']}",
+                                    style: textStyle,
+                                  ),
+                                  Spacer(),
+                                  Text(
+                                    "رقم المدرسة: ${installment['school']}",
+                                    style: textStyle,
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  Text(
+                                    "الصف: ${installment['stage']}",
+                                    style: textStyle,
+                                  ),
+                                  SizedBox(width: 10),
+                                  Text(
+                                    "${installment['stream'] == "null" ? '' : installment['stream']}",
+                                    style: textStyle,
+                                  ),
+                                  SizedBox(width: 10),
+                                  Text(
+                                    "الشعبة: ${installment['section'] ?? 'غير محدد'}",
+                                    style: textStyle,
+                                  ),
+                                  Spacer(),
+                                  Text(
+                                    "رقم القسط: ${installment['id']}",
+                                    style: textStyle,
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  Text(
+                                    "مبلغ القسط: ",
+                                    style: textStyle,
+                                  ),
+                                  Text(
+                                    "${installment['amount']}",
+                                    style: textStyle,
+                                  ),
+                                  Text(
+                                    "  الف دينار عراقي   ",
+                                    style: TextStyle(color: Colors.grey),
+                                  ),
+                                  Spacer(),
+                                  Text(
+                                    "${installment['date']}",
+                                    style: headerTextStyle,
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     );
