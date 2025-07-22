@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'dart:typed_data';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
-
-import 'package:flutter/services.dart' show rootBundle;
 import 'package:printing/printing.dart';
 
 class FinancialSummaryPrintPage extends StatelessWidget {
@@ -47,21 +46,25 @@ class FinancialSummaryPrintPage extends StatelessWidget {
 
   Future<Uint8List> _generatePdf(PdfPageFormat format) async {
     final pdf = pw.Document();
-    final amiriBold = await rootBundle.load("fonts/Amiri-Bold.ttf");
-    final ttf = pw.Font.ttf(amiriBold);
+    // Load Amiri-Bold.ttf font for Arabic support
+    final fontData = await rootBundle.load('fonts/Amiri-Bold.ttf');
+    final ttf = pw.Font.ttf(fontData);
     pdf.addPage(
       pw.Page(
         pageFormat: format,
-        textDirection: pw.TextDirection.rtl,
         build: (pw.Context context) {
           return pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.stretch,
             children: [
-              pw.Text('الملخص المالي', style: pw.TextStyle(font: ttf, fontSize: 22, fontWeight: pw.FontWeight.bold)),
+              pw.Text('الملخص المالي',
+                  style: pw.TextStyle(font: ttf, fontSize: 22, fontWeight: pw.FontWeight.bold),
+                  textDirection: pw.TextDirection.rtl),
               pw.SizedBox(height: 10),
               _buildSummaryTable(ttf),
               pw.SizedBox(height: 20),
-              pw.Text('تفاصيل المدارس', style: pw.TextStyle(font: ttf, fontSize: 18, fontWeight: pw.FontWeight.bold)),
+              pw.Text('تفاصيل المدارس',
+                  style: pw.TextStyle(font: ttf, fontSize: 18, fontWeight: pw.FontWeight.bold),
+                  textDirection: pw.TextDirection.rtl),
               pw.SizedBox(height: 10),
               _buildSchoolsTable(ttf),
             ],
@@ -72,6 +75,14 @@ class FinancialSummaryPrintPage extends StatelessWidget {
     return pdf.save();
   }
 
+  String _formatNumber(num value) {
+    if (value % 1 == 0) {
+      return value.toInt().toString();
+    } else {
+      return value.toStringAsFixed(2);
+    }
+  }
+
   pw.Widget _buildSummaryTable(pw.Font ttf) {
     return pw.Table(
       border: pw.TableBorder.all(),
@@ -79,37 +90,61 @@ class FinancialSummaryPrintPage extends StatelessWidget {
         pw.TableRow(children: [
           pw.Padding(
             padding: pw.EdgeInsets.all(4),
-            child: pw.Text('مجموع الأقساط الكلي (المطلوب)', textAlign: pw.TextAlign.center, style: pw.TextStyle(font: ttf), textDirection: pw.TextDirection.rtl),
+            child: pw.Text('مجموع الأقساط الكلي (المطلوب)',
+                style: pw.TextStyle(font: ttf),
+                textAlign: pw.TextAlign.center,
+                textDirection: pw.TextDirection.rtl),
           ),
           pw.Padding(
             padding: pw.EdgeInsets.all(4),
-            child: pw.Text('المجموع الكلي الواصل', textAlign: pw.TextAlign.center, style: pw.TextStyle(font: ttf), textDirection: pw.TextDirection.rtl),
+            child: pw.Text('المجموع الكلي الواصل',
+                style: pw.TextStyle(font: ttf),
+                textAlign: pw.TextAlign.center,
+                textDirection: pw.TextDirection.rtl),
           ),
           pw.Padding(
             padding: pw.EdgeInsets.all(4),
-            child: pw.Text('مجموع الطلاب الكلي', textAlign: pw.TextAlign.center, style: pw.TextStyle(font: ttf), textDirection: pw.TextDirection.rtl),
+            child: pw.Text('مجموع الطلاب الكلي',
+                style: pw.TextStyle(font: ttf),
+                textAlign: pw.TextAlign.center,
+                textDirection: pw.TextDirection.rtl),
           ),
           pw.Padding(
             padding: pw.EdgeInsets.all(4),
-            child: pw.Text('الواردات الخارجية', textAlign: pw.TextAlign.center, style: pw.TextStyle(font: ttf), textDirection: pw.TextDirection.rtl),
+            child: pw.Text('الواردات الخارجية',
+                style: pw.TextStyle(font: ttf),
+                textAlign: pw.TextAlign.center,
+                textDirection: pw.TextDirection.rtl),
           ),
         ]),
         pw.TableRow(children: [
           pw.Padding(
             padding: pw.EdgeInsets.all(4),
-            child: pw.Text('${grandTotalInstallments.toStringAsFixed(2)} د.ع', textAlign: pw.TextAlign.center, style: pw.TextStyle(font: ttf), textDirection: pw.TextDirection.rtl),
+            child: pw.Text('${_formatNumber(grandTotalInstallments)} د.ع',
+                style: pw.TextStyle(font: ttf),
+                textAlign: pw.TextAlign.center,
+                textDirection: pw.TextDirection.rtl),
           ),
           pw.Padding(
             padding: pw.EdgeInsets.all(4),
-            child: pw.Text('${grandTotalPaid.toStringAsFixed(2)} د.ع', textAlign: pw.TextAlign.center, style: pw.TextStyle(font: ttf), textDirection: pw.TextDirection.rtl),
+            child: pw.Text('${_formatNumber(grandTotalPaid)} د.ع',
+                style: pw.TextStyle(font: ttf),
+                textAlign: pw.TextAlign.center,
+                textDirection: pw.TextDirection.rtl),
           ),
           pw.Padding(
             padding: pw.EdgeInsets.all(4),
-            child: pw.Text('$totalStudents', textAlign: pw.TextAlign.center, style: pw.TextStyle(font: ttf), textDirection: pw.TextDirection.rtl),
+            child: pw.Text('$totalStudents',
+                style: pw.TextStyle(font: ttf),
+                textAlign: pw.TextAlign.center,
+                textDirection: pw.TextDirection.rtl),
           ),
           pw.Padding(
             padding: pw.EdgeInsets.all(4),
-            child: pw.Text('${externalTotal.toStringAsFixed(2)} د.ع', textAlign: pw.TextAlign.center, style: pw.TextStyle(font: ttf), textDirection: pw.TextDirection.rtl),
+            child: pw.Text('${_formatNumber(externalTotal)} د.ع',
+                style: pw.TextStyle(font: ttf),
+                textAlign: pw.TextAlign.center,
+                textDirection: pw.TextDirection.rtl),
           ),
         ]),
       ],
@@ -121,12 +156,42 @@ class FinancialSummaryPrintPage extends StatelessWidget {
       border: pw.TableBorder.all(),
       children: [
         pw.TableRow(children: [
-          pw.Padding(padding: pw.EdgeInsets.all(4), child: pw.Text('المدرسة', textAlign: pw.TextAlign.center, style: pw.TextStyle(font: ttf), textDirection: pw.TextDirection.rtl)),
-          pw.Padding(padding: pw.EdgeInsets.all(4), child: pw.Text('عدد الطلاب', textAlign: pw.TextAlign.center, style: pw.TextStyle(font: ttf), textDirection: pw.TextDirection.rtl)),
-          pw.Padding(padding: pw.EdgeInsets.all(4), child: pw.Text('مجموع الأقساط المطلوب', textAlign: pw.TextAlign.center, style: pw.TextStyle(font: ttf), textDirection: pw.TextDirection.rtl)),
-          pw.Padding(padding: pw.EdgeInsets.all(4), child: pw.Text('الأقساط الواصلة', textAlign: pw.TextAlign.center, style: pw.TextStyle(font: ttf), textDirection: pw.TextDirection.rtl)),
-          pw.Padding(padding: pw.EdgeInsets.all(4), child: pw.Text('الرسوم الإضافية الواصلة', textAlign: pw.TextAlign.center, style: pw.TextStyle(font: ttf), textDirection: pw.TextDirection.rtl)),
-          pw.Padding(padding: pw.EdgeInsets.all(4), child: pw.Text('المجموع الواصل للمدرسة', textAlign: pw.TextAlign.center, style: pw.TextStyle(font: ttf), textDirection: pw.TextDirection.rtl)),
+          pw.Padding(
+              padding: pw.EdgeInsets.all(4),
+              child: pw.Text('المدرسة',
+                  style: pw.TextStyle(font: ttf),
+                  textAlign: pw.TextAlign.center,
+                  textDirection: pw.TextDirection.rtl)),
+          pw.Padding(
+              padding: pw.EdgeInsets.all(4),
+              child: pw.Text('عدد الطلاب',
+                  style: pw.TextStyle(font: ttf),
+                  textAlign: pw.TextAlign.center,
+                  textDirection: pw.TextDirection.rtl)),
+          pw.Padding(
+              padding: pw.EdgeInsets.all(4),
+              child: pw.Text('مجموع الأقساط المطلوب',
+                  style: pw.TextStyle(font: ttf),
+                  textAlign: pw.TextAlign.center,
+                  textDirection: pw.TextDirection.rtl)),
+          pw.Padding(
+              padding: pw.EdgeInsets.all(4),
+              child: pw.Text('الأقساط الواصلة',
+                  style: pw.TextStyle(font: ttf),
+                  textAlign: pw.TextAlign.center,
+                  textDirection: pw.TextDirection.rtl)),
+          pw.Padding(
+              padding: pw.EdgeInsets.all(4),
+              child: pw.Text('الرسوم الإضافية الواصلة',
+                  style: pw.TextStyle(font: ttf),
+                  textAlign: pw.TextAlign.center,
+                  textDirection: pw.TextDirection.rtl)),
+          pw.Padding(
+              padding: pw.EdgeInsets.all(4),
+              child: pw.Text('المجموع الواصل للمدرسة',
+                  style: pw.TextStyle(font: ttf),
+                  textAlign: pw.TextAlign.center,
+                  textDirection: pw.TextDirection.rtl)),
         ]),
         ...schools.map((school) {
           int schoolId = school['id'];
@@ -136,12 +201,42 @@ class FinancialSummaryPrintPage extends StatelessWidget {
           double feesTotal = feesTotals[schoolId] ?? 0;
           double schoolTotalPaid = paidInstallmentTotal + feesTotal;
           return pw.TableRow(children: [
-            pw.Padding(padding: pw.EdgeInsets.all(4), child: pw.Text('${school['name']}', textAlign: pw.TextAlign.center, style: pw.TextStyle(font: ttf), textDirection: pw.TextDirection.rtl)),
-            pw.Padding(padding: pw.EdgeInsets.all(4), child: pw.Text('$studentCount', textAlign: pw.TextAlign.center, style: pw.TextStyle(font: ttf), textDirection: pw.TextDirection.rtl)),
-            pw.Padding(padding: pw.EdgeInsets.all(4), child: pw.Text('${totalInstallment.toStringAsFixed(2)} د.ع', textAlign: pw.TextAlign.center, style: pw.TextStyle(font: ttf), textDirection: pw.TextDirection.rtl)),
-            pw.Padding(padding: pw.EdgeInsets.all(4), child: pw.Text('${paidInstallmentTotal.toStringAsFixed(2)} د.ع', textAlign: pw.TextAlign.center, style: pw.TextStyle(font: ttf), textDirection: pw.TextDirection.rtl)),
-            pw.Padding(padding: pw.EdgeInsets.all(4), child: pw.Text('${feesTotal.toStringAsFixed(2)} د.ع', textAlign: pw.TextAlign.center, style: pw.TextStyle(font: ttf), textDirection: pw.TextDirection.rtl)),
-            pw.Padding(padding: pw.EdgeInsets.all(4), child: pw.Text('${schoolTotalPaid.toStringAsFixed(2)} د.ع', textAlign: pw.TextAlign.center, style: pw.TextStyle(font: ttf), textDirection: pw.TextDirection.rtl)),
+            pw.Padding(
+                padding: pw.EdgeInsets.all(4),
+                child: pw.Text('${school['name']}',
+                    style: pw.TextStyle(font: ttf),
+                    textAlign: pw.TextAlign.center,
+                    textDirection: pw.TextDirection.rtl)),
+            pw.Padding(
+                padding: pw.EdgeInsets.all(4),
+                child: pw.Text('$studentCount',
+                    style: pw.TextStyle(font: ttf),
+                    textAlign: pw.TextAlign.center,
+                    textDirection: pw.TextDirection.rtl)),
+            pw.Padding(
+                padding: pw.EdgeInsets.all(4),
+                child: pw.Text('${_formatNumber(totalInstallment)} د.ع',
+                    style: pw.TextStyle(font: ttf),
+                    textAlign: pw.TextAlign.center,
+                    textDirection: pw.TextDirection.rtl)),
+            pw.Padding(
+                padding: pw.EdgeInsets.all(4),
+                child: pw.Text('${_formatNumber(paidInstallmentTotal)} د.ع',
+                    style: pw.TextStyle(font: ttf),
+                    textAlign: pw.TextAlign.center,
+                    textDirection: pw.TextDirection.rtl)),
+            pw.Padding(
+                padding: pw.EdgeInsets.all(4),
+                child: pw.Text('${_formatNumber(feesTotal)} د.ع',
+                    style: pw.TextStyle(font: ttf),
+                    textAlign: pw.TextAlign.center,
+                    textDirection: pw.TextDirection.rtl)),
+            pw.Padding(
+                padding: pw.EdgeInsets.all(4),
+                child: pw.Text('${_formatNumber(schoolTotalPaid)} د.ع',
+                    style: pw.TextStyle(font: ttf),
+                    textAlign: pw.TextAlign.center,
+                    textDirection: pw.TextDirection.rtl)),
           ]);
         }).toList(),
       ],
