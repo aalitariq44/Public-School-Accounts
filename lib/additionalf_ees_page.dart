@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:maryams_school_fees/data.dart';
+import 'package:maryams_school_fees/one_student.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
@@ -159,6 +160,7 @@ class _AdditionalFeesPageState extends State<AdditionalFeesPage> {
             child: ListView.builder(
               itemCount: additionalFees.length,
               itemBuilder: (context, index) {
+                final fee = additionalFees[index];
                 return Card(
                   elevation: 2,
                   margin: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -168,32 +170,29 @@ class _AdditionalFeesPageState extends State<AdditionalFeesPage> {
                       backgroundColor: Theme.of(context).primaryColor,
                     ),
                     title: Text(
-                      additionalFees[index]['studentName'],
+                      fee['studentName'],
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                     subtitle: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                            '${additionalFees[index]['stage']} ${additionalFees[index]['stream'] == 'null' ? '' : 'لا يوجد'} - ${additionalFees[index]['section']}   رقم المدرسة: ${additionalFees[index]['school']}'),
+                            '${fee['stage']} ${fee['stream'] == 'null' ? '' : 'لا يوجد'} - ${fee['section']}   رقم المدرسة: ${fee['school']}'),
                         Row(
                           children: [
+                            Text('نوع الرسوم: ${fee['feeType']}'),
+                            SizedBox(width: 40),
                             Text(
-                                'نوع الرسوم: ${additionalFees[index]['feeType']}'),
-                            SizedBox(
-                              width: 40,
-                            ),
-                            Text(
-                              '${additionalFees[index]['notes']}',
+                              '${fee['notes']}',
                               style: TextStyle(color: Colors.green),
                             ),
                           ],
                         ),
                       ],
                     ),
-                    trailing: additionalFees[index]['isPaid'] == 1
+                    trailing: fee['isPaid'] == 1
                         ? Text(
-                            '${additionalFees[index]['amount'].round()} د.ع',
+                            '${fee['amount'].round()} د.ع',
                             style: TextStyle(
                                 color: Colors.green,
                                 fontWeight: FontWeight.bold,
@@ -206,6 +205,22 @@ class _AdditionalFeesPageState extends State<AdditionalFeesPage> {
                                 fontWeight: FontWeight.bold,
                                 fontSize: 14),
                           ),
+                    onTap: () async {
+                      // الانتقال إلى صفحة الطالب عند الضغط على الرسم الإضافي
+                      await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => OneStudent(
+                            id: int.tryParse(fee['studentId'].toString()) ?? 0,
+                          ),
+                        ),
+                      );
+                      // تحديث الرسوم الإضافية بعد العودة
+                      getAdditionalFees(
+                        feeType: currentFilter == 'الكل' ? null : currentFilter,
+                        paymentStatus: currentPaymentFilter == 'الكل' ? null : currentPaymentFilter,
+                      );
+                    },
                   ),
                 );
               },
