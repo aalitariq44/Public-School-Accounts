@@ -116,9 +116,9 @@ class _AllInstallmentsState extends State<AllInstallments> {
                   itemBuilder: (context, index) {
                     var installment = filteredInstallments[index];
                     return GestureDetector(
-                      onTap: () {
+                      onTap: () async {
                         // الانتقال إلى صفحة تفاصيل الطالب عند الضغط على القسط
-                        Navigator.push(
+                        await Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder: (context) => OneStudent(
@@ -126,6 +126,8 @@ class _AllInstallmentsState extends State<AllInstallments> {
                             ),
                           ),
                         );
+                        // تحديث الأقساط بعد العودة
+                        readData();
                       },
                       child: Container(
                         margin: EdgeInsets.all(4),
