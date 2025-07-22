@@ -22,6 +22,9 @@ class _OneStudentState extends State<OneStudent> {
   Map<String, dynamic> schoolInfo = {};
   Map<String, dynamic>? studentData;
 
+  // Controller for editing phone number
+  final phoneController = TextEditingController();
+
   List<Map<String, Object?>> additionalFees = [];
 
   final _formKey = GlobalKey<FormState>();
@@ -38,6 +41,8 @@ class _OneStudentState extends State<OneStudent> {
         await sqlDb.readData("SELECT * FROM students WHERE id = ${widget.id}");
     if (studentResponse.isNotEmpty) {
       studentData = Map<String, dynamic>.from(studentResponse[0]);
+      // Set phone controller value
+      phoneController.text = studentData!['phoneNumber']?.toString() ?? '';
     } else {
       // Handle case where student is not found
       isLoading = false;
@@ -90,6 +95,50 @@ class _OneStudentState extends State<OneStudent> {
     WHERE id = ${widget.id}
   ''');
     readData();
+  }
+
+  Future<void> updatePhoneNumber(String newPhone) async {
+    await sqlDb.updateData('''
+    UPDATE students
+    SET phoneNumber = '$newPhone'
+    WHERE id = ${widget.id}
+    ''');
+    readData();
+  }
+
+  void _showEditPhoneDialog(BuildContext context) {
+    String newPhone = phoneController.text;
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('تعديل رقم الهاتف'),
+          content: TextField(
+            decoration: InputDecoration(hintText: "أدخل رقم الهاتف الجديد"),
+            onChanged: (value) {
+              newPhone = value;
+            },
+            controller: phoneController,
+            keyboardType: TextInputType.phone,
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text('إلغاء'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: Text('حفظ'),
+              onPressed: () {
+                updatePhoneNumber(newPhone);
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   void _showPrintAllFeesDialog() {
@@ -613,9 +662,20 @@ class _OneStudentState extends State<OneStudent> {
                             style: TextStyle(fontSize: 20),
                           ),
                           Spacer(),
-                          Text(
-                            "رقم الهاتف :   ${studentData!['phoneNumber']}",
-                            style: TextStyle(fontSize: 20),
+                          Row(
+                            children: [
+                              Text(
+                                "رقم الهاتف :   ${studentData!['phoneNumber']}",
+                                style: TextStyle(fontSize: 20),
+                              ),
+                              IconButton(
+                                icon: Icon(Icons.edit),
+                                tooltip: 'تعديل رقم الهاتف',
+                                onPressed: () {
+                                  _showEditPhoneDialog(context);
+                                },
+                              ),
+                            ],
                           ),
                         ],
                       ),
