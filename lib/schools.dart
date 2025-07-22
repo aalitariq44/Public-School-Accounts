@@ -813,8 +813,8 @@ class _SchoolsPageState extends State<SchoolsPage> {
                                           )
                                         : Image.asset(
                                             'images/logo.png',
-                                            width: 40,
-                                            height: 40,
+                                            width: 80,
+                                            height: 80,
                                             fit: BoxFit.cover,
                                           ),
                                   ),
