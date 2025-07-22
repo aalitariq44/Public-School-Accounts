@@ -25,7 +25,6 @@ class _StudentListPageState extends State<StudentListPage> {
   List<Map> displayedStudents = [];
   TextEditingController searchController = TextEditingController();
   String currentFilter = 'all'; // 'all', 'paid', 'unpaid'
-  String levelFilter = 'all';
   String? stageFilter;
   String? sectionFilter;
   String? streamFilter;
@@ -126,8 +125,6 @@ class _StudentListPageState extends State<StudentListPage> {
           break;
       }
 
-      bool matchesLevel =
-          (levelFilter == 'all' || student['level'] == levelFilter);
       bool matchesStage =
           (stageFilter == null || student['stage'] == stageFilter);
       bool matchesSection =
@@ -136,7 +133,6 @@ class _StudentListPageState extends State<StudentListPage> {
           (streamFilter == null || student['stream'] == streamFilter);
 
       return matchesPaymentFilter &&
-          matchesLevel &&
           matchesStage &&
           matchesSection &&
           matchesStream;
@@ -570,8 +566,6 @@ class _StudentListPageState extends State<StudentListPage> {
           break;
       }
 
-      bool matchesLevel =
-          (levelFilter == 'all' || student['level'] == levelFilter);
       bool matchesStage =
           (stageFilter == null || student['stage'] == stageFilter);
       bool matchesSection =
@@ -581,7 +575,6 @@ class _StudentListPageState extends State<StudentListPage> {
 
       return matchesSearch &&
           matchesPaymentFilter &&
-          matchesLevel &&
           matchesStage &&
           matchesSection &&
           matchesStream;
@@ -596,6 +589,63 @@ class _StudentListPageState extends State<StudentListPage> {
     return (text.length <= maxLength)
         ? text
         : '${text.substring(0, maxLength)}...';
+  }
+
+  String? getLevelForStage(String? stage) {
+    if (stage == null) return null;
+    for (var entry in stages.entries) {
+      if (entry.value.contains(stage)) {
+        return entry.key;
+      }
+    }
+    return null;
+  }
+
+  List<String> getAvailableStages() {
+    if (allStudents.isEmpty) return [];
+    final available =
+        allStudents.map((s) => s['stage'].toString()).toSet().toList();
+    final allStagesOrdered = stages.values.expand((s) => s).toList();
+    available.sort(
+        (a, b) => allStagesOrdered.indexOf(a).compareTo(allStagesOrdered.indexOf(b)));
+    return available;
+  }
+
+  List<String> getAvailableStreams(String? stage) {
+    final level = getLevelForStage(stage);
+    if (allStudents.isEmpty || level != 'إعدادي' || stage == null) return [];
+    final available = allStudents
+        .where((s) => s['level'] == level && s['stage'] == stage)
+        .map((s) => s['stream'].toString())
+        .where((s) => s != 'null')
+        .toSet()
+        .toList();
+    final streamOrder = streams;
+    available.sort(
+        (a, b) => streamOrder.indexOf(a).compareTo(streamOrder.indexOf(b)));
+    return available;
+  }
+
+  List<String> getAvailableSections(String? stage, String? stream) {
+    final level = getLevelForStage(stage);
+    if (allStudents.isEmpty ||
+        stage == null ||
+        (level == 'إعدادي' && stream == null)) {
+      return [];
+    }
+    final available = allStudents.where((student) {
+      final studentLevel = getLevelForStage(student['stage']);
+      bool matchesStage = student['stage'] == stage;
+      bool matchesStream =
+          studentLevel != 'إعدادي' || student['stream'] == stream;
+      return matchesStage && matchesStream;
+    })
+        .map((s) => s['section'].toString())
+        .where((s) => s != 'null')
+        .toSet()
+        .toList();
+    available.sort();
+    return available;
   }
 
   @override
@@ -685,11 +735,10 @@ class _StudentListPageState extends State<StudentListPage> {
                     Padding(
                       padding: const EdgeInsets.all(4.0),
                       child: FilterChip(
-                        label: Text('الكل'),
-                        selected: levelFilter == 'all',
+                        label: Text('كل الصفوف'),
+                        selected: stageFilter == null,
                         onSelected: (selected) {
                           setState(() {
-                            levelFilter = 'all';
                             stageFilter = null;
                             streamFilter = null;
                             sectionFilter = null;
@@ -698,15 +747,14 @@ class _StudentListPageState extends State<StudentListPage> {
                         },
                       ),
                     ),
-                    ...stages.keys.map((level) => Padding(
+                    ...getAvailableStages().map((stage) => Padding(
                           padding: const EdgeInsets.all(4.0),
                           child: FilterChip(
-                            label: Text(level),
-                            selected: levelFilter == level,
+                            label: Text(stage),
+                            selected: stageFilter == stage,
                             onSelected: (selected) {
                               setState(() {
-                                levelFilter = level;
-                                stageFilter = null;
+                                stageFilter = selected ? stage : null;
                                 streamFilter = null;
                                 sectionFilter = null;
                                 applyFilter();
@@ -718,33 +766,7 @@ class _StudentListPageState extends State<StudentListPage> {
                 ),
               ),
             ),
-            if (levelFilter != 'all')
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: stages[levelFilter]!
-                        .map((stage) => Padding(
-                              padding: const EdgeInsets.all(4.0),
-                              child: FilterChip(
-                                label: Text(stage),
-                                selected: stageFilter == stage,
-                                onSelected: (selected) {
-                                  setState(() {
-                                    stageFilter = selected ? stage : null;
-                                    streamFilter = null;
-                                    sectionFilter = null;
-                                    applyFilter();
-                                  });
-                                },
-                              ),
-                            ))
-                        .toList(),
-                  ),
-                ),
-              ),
-            if (levelFilter == 'إعدادي' && stageFilter != null)
+            if (getLevelForStage(stageFilter) == 'إعدادي' && stageFilter != null)
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8.0),
                 child: SingleChildScrollView(
@@ -765,7 +787,7 @@ class _StudentListPageState extends State<StudentListPage> {
                           },
                         ),
                       ),
-                      ...streams.map((stream) => Padding(
+                      ...getAvailableStreams(stageFilter).map((stream) => Padding(
                             padding: const EdgeInsets.all(4.0),
                             child: FilterChip(
                               label: Text(stream),
@@ -784,27 +806,30 @@ class _StudentListPageState extends State<StudentListPage> {
                 ),
               ),
             if (stageFilter != null &&
-                (levelFilter != 'إعدادي' || streamFilter != null))
+                (getLevelForStage(stageFilter) != 'إعدادي' ||
+                    streamFilter != null))
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8.0),
                 child: SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: Row(
-                    children: ['أ', 'ب', 'ج', 'د']
-                        .map((section) => Padding(
-                              padding: const EdgeInsets.all(4.0),
-                              child: FilterChip(
-                                label: Text('شعبة $section'),
-                                selected: sectionFilter == section,
-                                onSelected: (selected) {
-                                  setState(() {
-                                    sectionFilter = selected ? section : null;
-                                    applyFilter();
-                                  });
-                                },
-                              ),
-                            ))
-                        .toList(),
+                    children:
+                        getAvailableSections(stageFilter, streamFilter)
+                            .map((section) => Padding(
+                                  padding: const EdgeInsets.all(4.0),
+                                  child: FilterChip(
+                                    label: Text('شعبة $section'),
+                                    selected: sectionFilter == section,
+                                    onSelected: (selected) {
+                                      setState(() {
+                                        sectionFilter =
+                                            selected ? section : null;
+                                        applyFilter();
+                                      });
+                                    },
+                                  ),
+                                ))
+                            .toList(),
                   ),
                 ),
               ),
