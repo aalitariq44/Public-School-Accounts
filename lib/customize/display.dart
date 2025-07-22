@@ -842,18 +842,6 @@ class _StudentListPageState extends State<StudentListPage> {
                                 MaterialPageRoute(
                                   builder: (context) => OneStudent(
                                     id: student['id'],
-                                    name: student['name'],
-                                    stage: student['stage'],
-                                    totalInstallment:
-                                        student['totalInstallment'],
-                                    level: student['level'],
-                                    stream: student['stream'],
-                                    section: student['section'],
-                                    dateCommencement:
-                                        student['dateCommencement'],
-                                    phoneNumber:
-                                        student['phoneNumber'] ?? 'لايوجد',
-                                    schoolId: student['school'],
                                   ),
                                 ),
                               );

@@ -6,30 +6,9 @@ import 'package:maryams_school_fees/printe/print_multiple_additional_fees.dart';
 import 'package:maryams_school_fees/printe/print_page.dart';
 
 class OneStudent extends StatefulWidget {
-  const OneStudent(
-      {super.key,
-      required this.id,
-      required this.name,
-      required this.stage,
-      required this.totalInstallment,
-      required this.level,
-      required this.stream,
-      required this.section,
-      required this.dateCommencement,
-      required this.phoneNumber,
-      required this.schoolId});
+  const OneStudent({super.key, required this.id});
 
   final int id;
-  final String name;
-  final String stage;
-  final int totalInstallment;
-  final String level;
-  final String stream;
-  final String section;
-  final String dateCommencement;
-  final String phoneNumber;
-
-  final dynamic schoolId;
 
   @override
   State<OneStudent> createState() => _OneStudentState();
@@ -41,6 +20,7 @@ class _OneStudentState extends State<OneStudent> {
   bool isLoading = true;
   String studentNotes = '';
   Map<String, dynamic> schoolInfo = {};
+  Map<String, dynamic>? studentData;
 
   List<Map<String, Object?>> additionalFees = [];
 
@@ -53,6 +33,20 @@ class _OneStudentState extends State<OneStudent> {
   bool isPaid = false;
 
   Future readData() async {
+    // Fetch student data first
+    List<Map> studentResponse =
+        await sqlDb.readData("SELECT * FROM students WHERE id = ${widget.id}");
+    if (studentResponse.isNotEmpty) {
+      studentData = Map<String, dynamic>.from(studentResponse[0]);
+    } else {
+      // Handle case where student is not found
+      isLoading = false;
+      if (mounted) {
+        setState(() {});
+      }
+      return;
+    }
+
     List<Map> response = await sqlDb
         .readData("SELECT * FROM installments WHERE IDStudent = ${widget.id}");
     installments = List<Map<String, Object?>>.from(response);
@@ -63,10 +57,9 @@ class _OneStudentState extends State<OneStudent> {
 
     totalPaid =
         installments.fold(0, (sum, item) => sum + (item['amount'] as int));
-    remainingInstallment = widget.totalInstallment - totalPaid;
-    isLoading = false;
-    if (mounted) {
-      setState(() {});
+    if (studentData != null) {
+      remainingInstallment =
+          (studentData!['totalInstallment'] as int) - totalPaid;
     }
 
     List<Map> notesResponse = await sqlDb
@@ -76,10 +69,12 @@ class _OneStudentState extends State<OneStudent> {
     }
 
     // Fetch school information
-    List<Map> schoolResponse = await sqlDb
-        .readData("SELECT * FROM schools WHERE id = ${widget.schoolId}");
-    if (schoolResponse.isNotEmpty) {
-      schoolInfo = Map<String, dynamic>.from(schoolResponse[0]);
+    if (studentData != null && studentData!['schoolId'] != null) {
+      List<Map> schoolResponse = await sqlDb.readData(
+          "SELECT * FROM schools WHERE id = ${studentData!['schoolId']}");
+      if (schoolResponse.isNotEmpty) {
+        schoolInfo = Map<String, dynamic>.from(schoolResponse[0]);
+      }
     }
 
     isLoading = false;
@@ -172,11 +167,11 @@ class _OneStudentState extends State<OneStudent> {
       context,
       MaterialPageRoute(
         builder: (context) => PrintMultipleAdditionalFees(
-          name: widget.name,
-          stage: widget.stage,
-          level: widget.level,
-          stream: widget.stream,
-          section: widget.section,
+          name: studentData!['name'],
+          stage: studentData!['stage'],
+          level: studentData!['level'],
+          stream: studentData!['stream'],
+          section: studentData!['section'],
           fees: selectedFees,
           schoolName: schoolInfo['name'],
           address: schoolInfo['address'],
@@ -602,47 +597,51 @@ class _OneStudentState extends State<OneStudent> {
       appBar: AppBar(
         title: Text('تفاصيل الطالب'),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(10.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Text(
-                  "اسم الطالب :   ${widget.name}",
-                  style: TextStyle(fontSize: 20),
-                ),
-                Spacer(),
-                Text(
-                  "رقم الهاتف :   ${widget.phoneNumber}",
-                  style: TextStyle(fontSize: 20),
-                ),
-              ],
-            ),
-            SizedBox(height: 20),
-            Container(
-              padding: EdgeInsets.only(bottom: 20),
-              decoration: BoxDecoration(
-                border:
-                    Border(bottom: BorderSide(color: Colors.grey, width: 1)),
-              ),
-              child: Row(
-                children: [
-                  Text(
-                    widget.stream == "null"
-                        ? 'الصف :  ${widget.stage} -${widget.section}- '
-                        : 'الصف :  ${widget.stage} ${widget.stream}  -${widget.section}',
-                    style: TextStyle(fontSize: 20),
-                  ),
-                  Spacer(),
-                  Text(
-                    "القسط الكلي  :   ${widget.totalInstallment}   دينار عراقي",
-                    style: TextStyle(fontSize: 20),
-                  ),
-                ],
-              ),
-            ),
+      body: isLoading
+          ? Center(child: CircularProgressIndicator())
+          : studentData == null
+              ? Center(child: Text('لم يتم العثور على الطالب'))
+              : Padding(
+                  padding: const EdgeInsets.all(10.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            "اسم الطالب :   ${studentData!['name']}",
+                            style: TextStyle(fontSize: 20),
+                          ),
+                          Spacer(),
+                          Text(
+                            "رقم الهاتف :   ${studentData!['phoneNumber']}",
+                            style: TextStyle(fontSize: 20),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 20),
+                      Container(
+                        padding: EdgeInsets.only(bottom: 20),
+                        decoration: BoxDecoration(
+                          border: Border(
+                              bottom: BorderSide(color: Colors.grey, width: 1)),
+                        ),
+                        child: Row(
+                          children: [
+                            Text(
+                              studentData!['stream'] == "null"
+                                  ? 'الصف :  ${studentData!['stage']} -${studentData!['section']}- '
+                                  : 'الصف :  ${studentData!['stage']} ${studentData!['stream']}  -${studentData!['section']}',
+                              style: TextStyle(fontSize: 20),
+                            ),
+                            Spacer(),
+                            Text(
+                              "القسط الكلي  :   ${studentData!['totalInstallment']}   دينار عراقي",
+                              style: TextStyle(fontSize: 20),
+                            ),
+                          ],
+                        ),
+                      ),
             SizedBox(height: 10),
             Container(
               padding: EdgeInsets.only(bottom: 20),
@@ -948,95 +947,89 @@ class _OneStudentState extends State<OneStudent> {
               ),
             ),
             SizedBox(height: 10),
-            isLoading
-                ? Center(child: CircularProgressIndicator())
-                : Expanded(
-                    child: installments.isEmpty
-                        ? Center(
-                            child: Text(
-                              "لم يتم دفع اي قسط لحد الان",
-                              style: TextStyle(fontSize: 20),
-                            ),
-                          )
-                        : ListView.builder(
-                            itemCount: installments.length +
-                                1, // زيادة العدد بواحد للمساحة الإضافية
-                            itemBuilder: (context, index) {
-                              if (index == installments.length) {
-                                // إضافة مساحة في نهاية القائمة
-                                return SizedBox(height: 65);
-                              }
-                              final installment = installments[index];
-                              return Container(
-                                margin: EdgeInsets.all(4),
-                                decoration: BoxDecoration(
-                                  color: Color.fromARGB(255, 25, 2, 79),
-                                ),
-                                child: ListTile(
-                                  title: Row(
-                                    children: [
-                                      Center(
-                                        child: Padding(
-                                          padding:
-                                              const EdgeInsets.only(left: 10),
-                                          child: CircleAvatar(
-                                            backgroundColor: Colors.blue,
-                                            radius: 14,
-                                            child: Text(
-                                              "${index + 1}",
-                                              style: TextStyle(
-                                                color: Colors.black,
-                                              ),
-                                            ),
-                                          ),
+            Expanded(
+              child: installments.isEmpty
+                  ? Center(
+                      child: Text(
+                        "لم يتم دفع اي قسط لحد الان",
+                        style: TextStyle(fontSize: 20),
+                      ),
+                    )
+                  : ListView.builder(
+                      itemCount: installments.length +
+                          1, // زيادة العدد بواحد للمساحة الإضافية
+                      itemBuilder: (context, index) {
+                        if (index == installments.length) {
+                          // إضافة مساحة في نهاية القائمة
+                          return SizedBox(height: 65);
+                        }
+                        final installment = installments[index];
+                        return Container(
+                          margin: EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: Color.fromARGB(255, 25, 2, 79),
+                          ),
+                          child: ListTile(
+                            title: Row(
+                              children: [
+                                Center(
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(left: 10),
+                                    child: CircleAvatar(
+                                      backgroundColor: Colors.blue,
+                                      radius: 14,
+                                      child: Text(
+                                        "${index + 1}",
+                                        style: TextStyle(
+                                          color: Colors.black,
                                         ),
                                       ),
-                                      Text(
-                                        "مبلغ القسط:  ",
-                                        style: TextStyle(color: Colors.white),
-                                      ),
-                                      Text(
-                                        "${installment['amount']}  ",
-                                        style: TextStyle(color: Colors.white),
-                                      ),
-                                      Text(
-                                        "الف دينار عراقي  ",
-                                        style: TextStyle(color: Colors.grey),
-                                      ),
-                                      Spacer(),
-                                      SizedBox(width: 20),
-                                      Text(
-                                        "${installment['date']}  ",
-                                        style: TextStyle(color: Colors.grey),
-                                      ),
-                                      SizedBox(width: 10),
-                                      IconButton(
-                                        onPressed: () {
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (context) => PrintPage(
-                                                name: widget.name,
-                                                id: widget.id,
-                                                amount:
-                                                    "${installment['amount']}",
-                                                date:
-                                                    '${installment['date']}  ',
-                                                satge: widget.stage,
-                                                totalPaid: '${totalPaid}',
-                                                totalInstallment:
-                                                    widget.totalInstallment,
-                                                remainingInstallment:
-                                                    "${remainingInstallment}",
-                                                invoice:
-                                                    '${installment['id']}  ',
-                                                stage: widget.stage,
-                                                level: widget.level,
-                                                stream: widget.stream,
-                                                section: widget.section,
-                                                dateCommencement:
-                                                    widget.dateCommencement,
-                                                schoolId: widget.schoolId,
+                                    ),
+                                  ),
+                                ),
+                                Text(
+                                  "مبلغ القسط:  ",
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                                Text(
+                                  "${installment['amount']}  ",
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                                Text(
+                                  "الف دينار عراقي  ",
+                                  style: TextStyle(color: Colors.grey),
+                                ),
+                                Spacer(),
+                                SizedBox(width: 20),
+                                Text(
+                                  "${installment['date']}  ",
+                                  style: TextStyle(color: Colors.grey),
+                                ),
+                                SizedBox(width: 10),
+                                IconButton(
+                                  onPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => PrintPage(
+                                          name: studentData!['name'],
+                                          id: widget.id,
+                                          amount: "${installment['amount']}",
+                                          date: '${installment['date']}  ',
+                                          satge: studentData!['stage'],
+                                          totalPaid: '${totalPaid}',
+                                          totalInstallment:
+                                              studentData!['totalInstallment'],
+                                          remainingInstallment:
+                                              "${remainingInstallment}",
+                                          invoice: '${installment['id']}  ',
+                                          stage: studentData!['stage'],
+                                          level: studentData!['level'],
+                                          stream: studentData!['stream'],
+                                          section: studentData!['section'],
+                                          dateCommencement: studentData![
+                                              'dateCommencement'],
+                                          schoolId: studentData!['schoolId'],
                                                 schoolName: schoolInfo['name']
                                                         ?.toString() ??
                                                     '',

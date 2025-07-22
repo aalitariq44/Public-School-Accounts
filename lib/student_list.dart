@@ -267,18 +267,6 @@ class _StudentListState extends State<StudentList> {
                     MaterialPageRoute(
                       builder: (context) => OneStudent(
                         id: filteredStudents[i]['id'],
-                        name: filteredStudents[i]['name'],
-                        stage: filteredStudents[i]['stage'],
-                        totalInstallment: filteredStudents[i]
-                            ['totalInstallment'],
-                        level: filteredStudents[i]['level'],
-                        stream: filteredStudents[i]['stream'],
-                        section: filteredStudents[i]['section'],
-                        dateCommencement: filteredStudents[i]
-                            ['dateCommencement'],
-                        phoneNumber:
-                            '${filteredStudents[i]['phoneNumber']?.isEmpty == true || filteredStudents[i]['phoneNumber'] == null ? 'لا يوجد' : filteredStudents[i]['phoneNumber']}',
-                        schoolId: filteredStudents[i]['school'],
                       ),
                     ),
                   );
