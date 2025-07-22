@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:maryams_school_fees/academicYear.dart';
+import 'package:maryams_school_fees/data.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
@@ -15,7 +16,6 @@ class PrintMultipleAdditionalFees extends StatefulWidget {
   final String schoolName;
   final String address;
   final String phone;
-
   final List<Map<String, dynamic>> fees;
 
   PrintMultipleAdditionalFees({
@@ -31,17 +31,42 @@ class PrintMultipleAdditionalFees extends StatefulWidget {
   });
 
   @override
-  _PrintMultipleAdditionalFeesState createState() =>
-      _PrintMultipleAdditionalFeesState();
+  _PrintMultipleAdditionalFeesState createState() => _PrintMultipleAdditionalFeesState();
 }
 
-class _PrintMultipleAdditionalFeesState
-    extends State<PrintMultipleAdditionalFees> {
+class _PrintMultipleAdditionalFeesState extends State<PrintMultipleAdditionalFees> {
   String academicYear = AppSettings().academicYear;
-  String selectedAccountManager = 'محاسب';
-  List<String> accountManagers = [
-    "محاسب",
-  ];
+  String selectedAccountManager = '';
+  List<String> accountManagers = [];
+
+  // جلب المحاسبين من قاعدة البيانات
+  Future<void> _loadAccountManagers() async {
+    try {
+      final SqlDb sqlDb = SqlDb();
+      List<Map> result = await sqlDb.readData("SELECT name FROM accountants");
+      setState(() {
+        accountManagers = result.map<String>((e) => e['name'].toString()).toList();
+        accountManagers.add('إضافة اسم محاسب');
+        if (accountManagers.isNotEmpty) {
+          selectedAccountManager = accountManagers.first;
+        } else {
+          selectedAccountManager = '';
+        }
+      });
+    } catch (e) {
+      setState(() {
+        accountManagers = ['محاسب', 'إضافة اسم محاسب'];
+        selectedAccountManager = 'محاسب';
+      });
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAccountManagers();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -49,7 +74,7 @@ class _PrintMultipleAdditionalFeesState
         title: Text("معاينة الطباعة"),
         actions: [
           DropdownButton<String>(
-            value: selectedAccountManager,
+            value: selectedAccountManager.isNotEmpty ? selectedAccountManager : null,
             icon: Icon(Icons.arrow_drop_down),
             iconSize: 24,
             elevation: 16,
@@ -67,18 +92,12 @@ class _PrintMultipleAdditionalFeesState
                 });
               }
             },
-            items: [
-              ...accountManagers.map<DropdownMenuItem<String>>((String value) {
-                return DropdownMenuItem<String>(
-                  value: value,
-                  child: Text(value),
-                );
-              }).toList(),
-              DropdownMenuItem<String>(
-                value: 'إضافة اسم محاسب',
-                child: Text('إضافة اسم محاسب'),
-              ),
-            ],
+            items: accountManagers.map<DropdownMenuItem<String>>((String value) {
+              return DropdownMenuItem<String>(
+                value: value,
+                child: Text(value),
+              );
+            }).toList(),
           ),
           SizedBox(width: 20),
         ],
@@ -97,15 +116,17 @@ class _PrintMultipleAdditionalFeesState
   }
 
   void _showAddAccountManagerDialog() {
-    TextEditingController _controller = TextEditingController();
+    String newManager = '';
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
           title: Text('إضافة اسم محاسب جديد'),
           content: TextField(
-            controller: _controller,
-            decoration: InputDecoration(hintText: "أدخل اسم المحاسب"),
+            onChanged: (value) {
+              newManager = value;
+            },
+            decoration: InputDecoration(hintText: "أدخل اسم المحاسب الجديد"),
           ),
           actions: <Widget>[
             TextButton(
@@ -116,13 +137,15 @@ class _PrintMultipleAdditionalFeesState
             ),
             TextButton(
               child: Text('إضافة'),
-              onPressed: () {
-                setState(() {
-                  if (_controller.text.isNotEmpty) {
-                    accountManagers.add(_controller.text);
-                    selectedAccountManager = _controller.text;
-                  }
-                });
+              onPressed: () async {
+                if (newManager.isNotEmpty) {
+                  final SqlDb sqlDb = SqlDb();
+                  await sqlDb.insertData("INSERT INTO accountants (name) VALUES ('$newManager')");
+                  await _loadAccountManagers();
+                  setState(() {
+                    selectedAccountManager = newManager;
+                  });
+                }
                 Navigator.of(context).pop();
               },
             ),
