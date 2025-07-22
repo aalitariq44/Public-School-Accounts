@@ -115,6 +115,12 @@ class _FinancialSummaryPageState extends State<FinancialSummaryPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  _buildSummaryCard(
+                    'مجموع الأقساط الكلي (المطلوب)',
+                    '${grandTotalInstallments.toStringAsFixed(2).replaceAll(RegExp(r'\.?0+$'), '')} د.ع',
+                    Colors.orange,
+                  ),
+                  SizedBox(height: 16),
                   Container(
                     padding: EdgeInsets.all(16),
                     decoration: BoxDecoration(
@@ -142,12 +148,6 @@ class _FinancialSummaryPageState extends State<FinancialSummaryPage> {
                         ),
                       ],
                     ),
-                  ),
-                  SizedBox(height: 16),
-                  _buildSummaryCard(
-                    'مجموع الأقساط الكلي (المطلوب)',
-                    '${grandTotalInstallments.toStringAsFixed(2).replaceAll(RegExp(r'\.?0+$'), '')} د.ع',
-                    Colors.orange,
                   ),
                   SizedBox(height: 16),
                   _buildSummaryCard(
