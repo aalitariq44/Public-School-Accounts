@@ -267,6 +267,7 @@ class _StudentListState extends State<StudentList> {
                     MaterialPageRoute(
                       builder: (context) => OneStudent(
                         id: filteredStudents[i]['id'],
+                        schoolName: widget.schoolName,
                       ),
                     ),
                   );

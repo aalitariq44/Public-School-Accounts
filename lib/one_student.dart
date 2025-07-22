@@ -6,9 +6,10 @@ import 'package:maryams_school_fees/printe/print_multiple_additional_fees.dart';
 import 'package:maryams_school_fees/printe/print_page.dart';
 
 class OneStudent extends StatefulWidget {
-  const OneStudent({super.key, required this.id});
-
   final int id;
+  final String? schoolName;
+
+  const OneStudent({Key? key, required this.id, this.schoolName}) : super(key: key);
 
   @override
   State<OneStudent> createState() => _OneStudentState();
@@ -212,6 +213,11 @@ class _OneStudentState extends State<OneStudent> {
   }
 
   void _printSelectedFees(List<Map<String, dynamic>> selectedFees) {
+    String schoolNameToSend = (schoolInfo['name'] != null && schoolInfo['name'].toString().isNotEmpty)
+        ? schoolInfo['name'].toString()
+        : (widget.schoolName != null && widget.schoolName!.isNotEmpty ? widget.schoolName! : 'اسم المدرسة');
+    String addressToSend = schoolInfo['address']?.toString() ?? '';
+    String phoneToSend = schoolInfo['phone']?.toString() ?? '';
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -222,9 +228,9 @@ class _OneStudentState extends State<OneStudent> {
           stream: studentData!['stream'],
           section: studentData!['section'],
           fees: selectedFees,
-          schoolName: schoolInfo['name'],
-          address: schoolInfo['address'],
-          phone: schoolInfo['phone'],
+          schoolName: schoolNameToSend,
+          address: addressToSend,
+          phone: phoneToSend,
         ),
       ),
     );
@@ -644,7 +650,12 @@ class _OneStudentState extends State<OneStudent> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('تفاصيل الطالب'),
+        title: Text(
+          'تفاصيل الطالب - ' +
+              ((schoolInfo['name'] != null && schoolInfo['name'].toString().isNotEmpty)
+                  ? schoolInfo['name']
+                  : (widget.schoolName != null && widget.schoolName!.isNotEmpty ? widget.schoolName! : 'اسم المدرسة')),
+        ),
       ),
       body: isLoading
           ? Center(child: CircularProgressIndicator())
@@ -1068,6 +1079,9 @@ class _OneStudentState extends State<OneStudent> {
                                 SizedBox(width: 10),
                                 IconButton(
                                   onPressed: () {
+                                    String schoolNameToSend = (schoolInfo['name'] != null && schoolInfo['name'].toString().isNotEmpty)
+                                        ? schoolInfo['name'].toString()
+                                        : (widget.schoolName != null && widget.schoolName!.isNotEmpty ? widget.schoolName! : 'اسم المدرسة');
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(
@@ -1090,21 +1104,15 @@ class _OneStudentState extends State<OneStudent> {
                                           dateCommencement: studentData![
                                               'dateCommencement'],
                                           schoolId: studentData!['schoolId'],
-                                                schoolName: schoolInfo['name']
-                                                        ?.toString() ??
-                                                    '',
-                                                addres: schoolInfo['address']
-                                                        ?.toString() ??
-                                                    '',
-                                                phone: schoolInfo['phone']
-                                                        ?.toString() ??
-                                                    '',
-                                              ),
-                                            ),
-                                          );
-                                        },
-                                        icon: Icon(Icons.print),
+                                          schoolName: schoolNameToSend,
+                                          addres: schoolInfo['address']?.toString() ?? '',
+                                          phone: schoolInfo['phone']?.toString() ?? '',
+                                        ),
                                       ),
+                                    );
+                                  },
+                                  icon: Icon(Icons.print),
+                                ),
                                       IconButton(
                                         onPressed: () async {
                                           showModalBottomSheet(

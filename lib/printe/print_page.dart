@@ -193,6 +193,9 @@ class _PrintPageState extends State<PrintPage> {
 
   pw.Widget _buildPdfReceipt(
       ByteData logoImage, ByteData newtechImage, pw.Font ttf) {
+    String schoolNameToShow = (widget.schoolName != null && widget.schoolName.toString().isNotEmpty)
+        ? widget.schoolName.toString()
+        : 'اسم المدرسة';
     return pw.Container(
       width: 800,
       height: 400,
@@ -244,7 +247,7 @@ class _PrintPageState extends State<PrintPage> {
                   child: pw.Column(
                     mainAxisAlignment: pw.MainAxisAlignment.center,
                     children: [
-                      pw.Text(widget.schoolName,
+                      pw.Text(schoolNameToShow,
                           style: pw.TextStyle(
                               font: ttf,
                               fontSize: 14,
