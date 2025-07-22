@@ -110,186 +110,131 @@ class _FinancialSummaryPageState extends State<FinancialSummaryPage> {
       ),
       body: isLoading
           ? Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              padding: EdgeInsets.all(16),
+          : Padding(
+              padding: const EdgeInsets.all(16.0),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _buildSummaryCard(
-                    'مجموع الأقساط الكلي (المطلوب)',
-                    '${grandTotalInstallments.toStringAsFixed(2).replaceAll(RegExp(r'\.?0+$'), '')} د.ع',
-                    Colors.orange,
+                  _buildSummaryGrid(),
+                  SizedBox(height: 20),
+                  Text(
+                    'تفاصيل المدارس',
+                    style: Theme.of(context).textTheme.titleLarge,
+                    textAlign: TextAlign.center,
                   ),
-                  SizedBox(height: 16),
-                  Container(
-                    padding: EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.blue,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'المجموع الكلي الواصل:',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                        Text(
-                          '${grandTotalPaid.toStringAsFixed(2).replaceAll(RegExp(r'\.?0+$'), '')} د.ع',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ],
+                  SizedBox(height: 10),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      child: _buildSchoolsDataTable(),
                     ),
                   ),
-                  SizedBox(height: 16),
-                  _buildSummaryCard(
-                    'مجموع الطلاب الكلي',
-                    totalStudents.toString(),
-                    Colors.purple,
-                  ),
-                  SizedBox(height: 16),
-                  Container(
-                    padding: EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.green[100],
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'الواردات الخارجية:',
-                          style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black),
-                        ),
-                        Text(
-                          '${externalTotal.toStringAsFixed(2).replaceAll(RegExp(r'\.?0+$'), '')} د.ع',
-                          style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black),
-                        ),
-                      ],
-                    ),
-                  ),
-                  SizedBox(height: 16),
-                  ...schools.map((school) {
-                    int schoolId = school['id'];
-                    int studentCount = schoolStudentCounts[schoolId] ?? 0;
-                    double paidInstallmentTotal = paidInstallmentTotals[schoolId] ?? 0;
-                    double totalInstallment = totalInstallmentAmounts[schoolId] ?? 0;
-                    double feesTotal = feesTotals[schoolId] ?? 0;
-                    double schoolTotalPaid = paidInstallmentTotal + feesTotal;
-
-                    return Container(
-                      margin: EdgeInsets.only(bottom: 16),
-                      padding: EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.blue[50],
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: Colors.blue[200]!),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                school['name'],
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.blue,
-                                ),
-                              ),
-                              Text(
-                                '${schoolTotalPaid.toStringAsFixed(2).replaceAll(RegExp(r'\.?0+$'), '')} د.ع',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.blue,
-                                ),
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: 8),
-                          _buildDetailRow('عدد الطلاب:', studentCount.toDouble()),
-                          _buildDetailRow('مجموع الأقساط المطلوب:', totalInstallment),
-                          _buildDetailRow('الأقساط الواصلة:', paidInstallmentTotal),
-                          _buildDetailRow('الرسوم الإضافية الواصلة:', feesTotal),
-                        ],
-                      ),
-                    );
-                  }).toList(),
                 ],
               ),
             ),
     );
   }
 
+  Widget _buildSummaryGrid() {
+    return GridView.count(
+      crossAxisCount: 4,
+      shrinkWrap: true,
+      physics: NeverScrollableScrollPhysics(),
+      crossAxisSpacing: 16,
+      mainAxisSpacing: 16,
+      childAspectRatio: 1.2,
+      children: [
+        _buildSummaryCard(
+          'مجموع الأقساط الكلي (المطلوب)',
+          '${grandTotalInstallments.toStringAsFixed(2).replaceAll(RegExp(r'\.?0+$'), '')} د.ع',
+          Colors.orange,
+        ),
+        _buildSummaryCard(
+          'المجموع الكلي الواصل',
+          '${grandTotalPaid.toStringAsFixed(2).replaceAll(RegExp(r'\.?0+$'), '')} د.ع',
+          Colors.blue,
+        ),
+        _buildSummaryCard(
+          'مجموع الطلاب الكلي',
+          totalStudents.toString(),
+          Colors.purple,
+        ),
+        _buildSummaryCard(
+          'الواردات الخارجية',
+          '${externalTotal.toStringAsFixed(2).replaceAll(RegExp(r'\.?0+$'), '')} د.ع',
+          Colors.green,
+        ),
+      ],
+    );
+  }
+
   Widget _buildSummaryCard(String title, String value, Color color) {
-    return Container(
-      padding: EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
+    return Card(
+      elevation: 4,
+      color: color,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
             ),
-          ),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
+            SizedBox(height: 4),
+            Text(
+              value,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildDetailRow(String label, double amount) {
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey[700],
-            ),
-          ),
-          Text(
-            '${amount.toStringAsFixed(0)} د.ع',
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey[700],
-            ),
-          ),
+  Widget _buildSchoolsDataTable() {
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      child: DataTable(
+        columns: [
+          DataColumn(label: Text('المدرسة', style: TextStyle(fontWeight: FontWeight.bold))),
+          DataColumn(label: Text('عدد الطلاب', style: TextStyle(fontWeight: FontWeight.bold))),
+          DataColumn(label: Text('مجموع الأقساط المطلوب', style: TextStyle(fontWeight: FontWeight.bold))),
+          DataColumn(label: Text('الأقساط الواصلة', style: TextStyle(fontWeight: FontWeight.bold))),
+          DataColumn(label: Text('الرسوم الإضافية الواصلة', style: TextStyle(fontWeight: FontWeight.bold))),
+          DataColumn(label: Text('المجموع الواصل للمدرسة', style: TextStyle(fontWeight: FontWeight.bold))),
         ],
+        rows: schools.map((school) {
+          int schoolId = school['id'];
+          int studentCount = schoolStudentCounts[schoolId] ?? 0;
+          double paidInstallmentTotal = paidInstallmentTotals[schoolId] ?? 0;
+          double totalInstallment = totalInstallmentAmounts[schoolId] ?? 0;
+          double feesTotal = feesTotals[schoolId] ?? 0;
+          double schoolTotalPaid = paidInstallmentTotal + feesTotal;
+
+          return DataRow(
+            cells: [
+              DataCell(Text(school['name'])),
+              DataCell(Text(studentCount.toString())),
+              DataCell(Text('${totalInstallment.toStringAsFixed(2).replaceAll(RegExp(r'\.?0+$'), '')} د.ع')),
+              DataCell(Text('${paidInstallmentTotal.toStringAsFixed(2).replaceAll(RegExp(r'\.?0+$'), '')} د.ع')),
+              DataCell(Text('${feesTotal.toStringAsFixed(2).replaceAll(RegExp(r'\.?0+$'), '')} د.ع')),
+              DataCell(Text('${schoolTotalPaid.toStringAsFixed(2).replaceAll(RegExp(r'\.?0+$'), '')} د.ع', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue))),
+            ],
+          );
+        }).toList(),
       ),
     );
   }
