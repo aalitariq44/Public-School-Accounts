@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:maryams_school_fees/data.dart';
+import 'printe/financial_summary_print_page.dart';
 
 class FinancialSummaryPage extends StatefulWidget {
   @override
@@ -107,6 +108,32 @@ class _FinancialSummaryPageState extends State<FinancialSummaryPage> {
       appBar: AppBar(
         title: Text('الملخص المالي'),
         backgroundColor: Colors.blue,
+        actions: [
+          if (!isLoading)
+            IconButton(
+              icon: Icon(Icons.print),
+              tooltip: 'طباعة الملخص المالي',
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        // ignore: prefer_const_constructors
+                        FinancialSummaryPrintPage(
+                      schools: schools,
+                      schoolStudentCounts: schoolStudentCounts,
+                      paidInstallmentTotals: paidInstallmentTotals,
+                      totalInstallmentAmounts: totalInstallmentAmounts,
+                      feesTotals: feesTotals,
+                      externalTotal: externalTotal,
+                      grandTotalPaid: grandTotalPaid,
+                      grandTotalInstallments: grandTotalInstallments,
+                      totalStudents: totalStudents,
+                    ),
+                  ),
+                );
+              },
+            ),
+        ],
       ),
       body: isLoading
           ? Center(child: CircularProgressIndicator())
