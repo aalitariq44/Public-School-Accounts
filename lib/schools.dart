@@ -5,6 +5,7 @@ import 'package:maryams_school_fees/app.dart';
 import 'package:maryams_school_fees/backup_page.dart';
 import 'package:maryams_school_fees/data.dart';
 import 'package:maryams_school_fees/external_income_page.dart';
+import 'package:maryams_school_fees/financial_summary_page.dart';
 import 'package:maryams_school_fees/settings.dart';
 import 'package:file_picker/file_picker.dart';
 
@@ -71,202 +72,6 @@ class _SchoolsPageState extends State<SchoolsPage> {
     }
   }
 
-  Future<void> _showFinancialSummary() async {
-    List<Map> installments = await sqlDb.readData(
-        "SELECT i.amount, i.IDStudent, CAST(s.school AS INTEGER) as school FROM installments i INNER JOIN students s ON i.IDStudent = s.id");
-    List<Map> additionalFees = await sqlDb.readData(
-        "SELECT af.amount, af.studentId, CAST(s.school AS INTEGER) as school FROM additionalFees af INNER JOIN students s ON af.studentId = s.id WHERE af.isPaid = 1");
-    List<Map> externalIncome =
-        await sqlDb.readData("SELECT amount FROM external_income");
-
-    Map<int, double> installmentTotals = {};
-    Map<int, double> feesTotals = {};
-
-    for (var installment in installments) {
-      int schoolId = installment['school'] ?? 0;
-      double amount = (installment['amount'] ?? 0).toDouble();
-      installmentTotals[schoolId] = (installmentTotals[schoolId] ?? 0) + amount;
-    }
-
-    for (var fee in additionalFees) {
-      int schoolId = fee['school'] ?? 0;
-      double amount = (fee['amount'] ?? 0).toDouble();
-      feesTotals[schoolId] = (feesTotals[schoolId] ?? 0) + amount;
-    }
-
-    double externalTotal = 0;
-    for (var income in externalIncome) {
-      externalTotal += (income['amount'] ?? 0).toDouble();
-    }
-
-    double grandTotal = externalTotal;
-    installmentTotals.values.forEach((total) => grandTotal += total);
-    feesTotals.values.forEach((total) => grandTotal += total);
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(15),
-          ),
-          child: Container(
-            width: MediaQuery.of(context).size.width * 0.8,
-            padding: EdgeInsets.all(16),
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    padding: EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.blue,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'المجموع الكلي:',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                        Text(
-                          '${grandTotal.toStringAsFixed(2).replaceAll(RegExp(r'\.?0+$'), '')} د.ع',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  SizedBox(height: 16),
-                  Container(
-                    padding: EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.green[100],
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'الواردات الخارجية:',
-                          style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black),
-                        ),
-                        Text(
-                          '${externalTotal.toStringAsFixed(2).replaceAll(RegExp(r'\.?0+$'), '')} د.ع',
-                          style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black),
-                        ),
-                      ],
-                    ),
-                  ),
-                  SizedBox(height: 16),
-                  ...schools.map((school) {
-                    int schoolId = school['id'];
-                    double installmentTotal = installmentTotals[schoolId] ?? 0;
-                    double feesTotal = feesTotals[schoolId] ?? 0;
-                    double schoolTotal = installmentTotal + feesTotal;
-
-                    return Container(
-                      margin: EdgeInsets.only(bottom: 16),
-                      padding: EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.blue[50],
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: Colors.blue[200]!),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                school['name'],
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.blue,
-                                ),
-                              ),
-                              Text(
-                                '${schoolTotal.toStringAsFixed(2).replaceAll(RegExp(r'\.?0+$'), '')} د.ع',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.blue,
-                                ),
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: 8),
-                          _buildDetailRow('الأقساط:', installmentTotal),
-                          _buildDetailRow('الرسوم الإضافية:', feesTotal),
-                        ],
-                      ),
-                    );
-                  }).toList(),
-                  SizedBox(height: 16),
-                  Center(
-                    child: TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: Text(
-                        'إغلاق',
-                        style: TextStyle(color: Colors.white),
-                      ),
-                      style: TextButton.styleFrom(
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                        backgroundColor: Colors.blue,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildDetailRow(String label, double amount) {
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey[700],
-            ),
-          ),
-          Text(
-            '${amount.toStringAsFixed(0)} د.ع',
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey[700],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   Future<void> _pickLogo() async {
     FilePickerResult? result = await FilePicker.platform.pickFiles(
@@ -664,7 +469,14 @@ class _SchoolsPageState extends State<SchoolsPage> {
             ),
           ),
           IconButton(
-            onPressed: _showFinancialSummary,
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => FinancialSummaryPage(),
+                ),
+              );
+            },
             icon: Row(
               children: [
                 Text('ملخص مالي'),
